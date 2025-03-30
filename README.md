@@ -22,23 +22,20 @@ This plugin implements a **dual-cleanup system** to manage log files:
     B -->|No| D{Size >10MB?}
     D -->|Yes| E[Delete Oldest]
     D -->|No| F[Keep File]
+
     
     Pwnagotchi->>Plugin: Internet available
+    
     Plugin->>SD_Card: Scan /var/log/pwnagotchi/
+    
     SD_Card->>Plugin: Return file list
+    
     Plugin->>Plugin: Calculate total size
+    
     alt Size >10MB or Age >7d
-        Plugin->>SD_Card: Delete target files
+    
+    Plugin->>SD_Card: Delete target files
+    
     end
+    
     Plugin->>Pwnagotchi: Update UI status
-
-/var/log/pwnagotchi/
-├── pwnagotchi.log       # Active log (never deleted)
-├── pwnagotchi.1.log     # Older logs (cleaned by plugin)
-└── pwnagotchi.2.log     # Older logs (cleaned by plugin)
-
-# Check permissions
-ls -la /var/log/pwnagotchi*
-
-# Manual cleanup test
-sudo python3 -c "import os, time; [os.remove(f) for f in ['/var/log/pwnagotchi/'+f for f in os.listdir('/var/log/pwnagotchi/')] if time.time()-os.path.getmtime(f) > 604800]"
