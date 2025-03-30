@@ -24,11 +24,6 @@ graph TD
     B -->|No| D{Size >10MB?}
     D -->|Yes| E[Delete Oldest]
     D -->|No| F[Keep File]
-
-sequenceDiagram
-    participant Pwnagotchi
-    participant Plugin
-    participant SD_Card
     
     Pwnagotchi->>Plugin: Internet available
     Plugin->>SD_Card: Scan /var/log/pwnagotchi/
