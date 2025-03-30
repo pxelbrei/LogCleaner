@@ -1,5 +1,5 @@
 main.plugins.logcleaner.enabled = true
-main.plugins.logcleaner.text_color = "white"			      	# or "black"
+main.plugins.logcleaner.text_color = "white"              # or "black"
 main.plugins.logcleaner.log_dir = "/etc/pwnagotchi/log/"	# Customizable path
 main.plugins.logcleaner.max_log_age_days = 7		      		# Delete logs older than X days
 main.plugins.logcleaner.max_log_size_mb = 10	      			# Max storage in MB
