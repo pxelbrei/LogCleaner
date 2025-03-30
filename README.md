@@ -17,7 +17,6 @@ Automatically manages log files to prevent storage bloat on Pwnagotchi devices. 
 ### Core Functionality
 This plugin implements a **dual-cleanup system** to manage log files:
 
-```mermaid
 graph TD
     A[Check Logs] --> B{Age >7 days?}
     B -->|Yes| C[Delete File]
