@@ -1,9 +1,6 @@
 # LogCleaner Plugin for Pwnagotchi
 
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)  
-![Python 3.7+](https://img.shields.io/badge/python-3.7+-green.svg)  
-![Pwnagotchi 1.5.5+](https://img.shields.io/badge/pwnagotchi-1.5.5%2B-lightgrey)  
-![SD Card: 64GB Supported](https://img.shields.io/badge/SD%20Card-64GB%20SanDisk%20Ultra-brightgreen)
 
 Automatically manages log files to prevent storage bloat on Pwnagotchi devices. Perfect for resource-constrained systems like Raspberry Pi Zero.
 
@@ -15,17 +12,40 @@ Automatically manages log files to prevent storage bloat on Pwnagotchi devices. 
 - **Warning system**: Visual alerts at 90% capacity
 - **Low overhead**: Optimized for minimal CPU/SD card wear
 
-## Compatibility
+## 🔧 How It Works
 
-| Hardware/Software       | Status      | Notes                      |
-|-------------------------|-------------|----------------------------|
-| SanDisk Ultra 64GB      | ✅ Tested   | FAT32 formatted            |
-| Raspberry Pi Zero W/WH  | ✅ Tested   | Official and Jay's forks   |
-| Pwnagotchi v1.5.5+      | ✅ Stable   |                            |
-| Jay's Fork v2.9.5.3+    | ✅ Stable   | Python 3.7+ required       |
+### Core Functionality
+This plugin implements a **dual-cleanup system** to manage log files:
 
-## Installation
+```mermaid
+graph TD
+    A[Check Logs] --> B{Age >7 days?}
+    B -->|Yes| C[Delete File]
+    B -->|No| D{Size >10MB?}
+    D -->|Yes| E[Delete Oldest]
+    D -->|No| F[Keep File]
 
-1. Copy the plugin:
-   ```bash
-   sudo cp logcleaner.py /usr/local/lib/python3.7/dist-packages/pwnagotchi/plugins/
+sequenceDiagram
+    participant Pwnagotchi
+    participant Plugin
+    participant SD_Card
+    
+    Pwnagotchi->>Plugin: Internet available
+    Plugin->>SD_Card: Scan /var/log/pwnagotchi/
+    SD_Card->>Plugin: Return file list
+    Plugin->>Plugin: Calculate total size
+    alt Size >10MB or Age >7d
+        Plugin->>SD_Card: Delete target files
+    end
+    Plugin->>Pwnagotchi: Update UI status
+
+/var/log/pwnagotchi/
+├── pwnagotchi.log       # Active log (never deleted)
+├── pwnagotchi.1.log     # Older logs (cleaned by plugin)
+└── pwnagotchi.2.log     # Older logs (cleaned by plugin)
+
+# Check permissions
+ls -la /var/log/pwnagotchi*
+
+# Manual cleanup test
+sudo python3 -c "import os, time; [os.remove(f) for f in ['/var/log/pwnagotchi/'+f for f in os.listdir('/var/log/pwnagotchi/')] if time.time()-os.path.getmtime(f) > 604800]"
