@@ -9,10 +9,11 @@ class LogCleaner(Plugin):
     __author__ = 'pxelbrei'
     __version__ = '1.4.0'
     __license__ = 'GPLv3'
-    __description__ = 'Automated log management for /etc/pwnagotchi/log/'
+    __description__ = 'Automated log management with configurable retention policies'
 
     def __init__(self):
         super(LogCleaner, self).__init__()
+        # Default path for Jay editions
         self.log_dir = "/etc/pwnagotchi/log/"  
         self.max_log_age_days = 7
         self.max_log_size_mb = 10
@@ -20,12 +21,13 @@ class LogCleaner(Plugin):
         self.pos_y = 0
         self.storage_status = "OK"
         self.last_cleanup = 0
-        self.cleanup_interval = 3600
+        self.cleanup_interval = 3600  # 1 hour in seconds
 
+        # Create log directory if missing
         os.makedirs(self.log_dir, exist_ok=True)
 
     def on_config_changed(self, config):
-        """Lade Einstellungen aus config.toml"""
+        """Load settings from config.toml"""
         try:
             self.log_dir = config['main']['plugins']['logcleaner'].get('log_dir', "/etc/pwnagotchi/log/")
             self.max_log_age_days = int(config['main']['plugins']['logcleaner'].get('max_log_age_days', 7))
@@ -34,14 +36,16 @@ class LogCleaner(Plugin):
             self.pos_y = int(config['main']['plugins']['logcleaner'].get('pos_y', 0))
             self.cleanup_interval = int(config['main']['plugins']['logcleaner'].get('interval', 3600))
             
+            # Ensure path ends with /
             self.log_dir = os.path.join(self.log_dir, '')
             
         except Exception as e:
             self.logger.error(f"[LogCleaner] Config error: {e}")
 
     def on_ui_setup(self, ui):
-        """Initialisiere UI-Element mit konfigurierbarer Position"""
+        """Initialize UI element with configurable position"""
         try:
+            # Calculate position (negative values = from edge)
             display_width = ui.width()
             display_height = ui.height()
             pos_x = self.pos_x if self.pos_x >= 0 else display_width + self.pos_x
@@ -59,7 +63,7 @@ class LogCleaner(Plugin):
             self.logger.error(f"[LogCleaner] UI setup failed: {e}")
 
     def _get_log_files(self):
-        """Sichere Liste der Log-Dateien (sortiert nach Änderungsdatum)"""
+        """Get log files sorted by modification time (oldest first)"""
         try:
             return sorted(
                 glob.glob(os.path.join(self.log_dir, "*.log")),
@@ -70,7 +74,7 @@ class LogCleaner(Plugin):
             return []
 
     def _get_log_size_mb(self):
-        """Gesamtgröße der Logs in MB"""
+        """Calculate total log size in MB"""
         try:
             return sum(os.path.getsize(f) for f in self._get_log_files()) / (1024 ** 2)
         except Exception as e:
@@ -78,7 +82,7 @@ class LogCleaner(Plugin):
             return 0
 
     def _clean_logs(self):
-        """Führe Bereinigung durch (Alter + Größe)"""
+        """Execute cleanup (age + size policies)"""
         if not os.path.exists(self.log_dir):
             self.logger.error(f"[LogCleaner] Log directory missing!")
             return 0
@@ -87,6 +91,7 @@ class LogCleaner(Plugin):
         cutoff = now - (self.max_log_age_days * 86400)
         deleted = 0
 
+        # 1. Age-based cleanup
         for log_file in self._get_log_files():
             try:
                 if os.path.getmtime(log_file) < cutoff:
@@ -95,13 +100,14 @@ class LogCleaner(Plugin):
                     self.logger.debug(f"[LogCleaner] Deleted (age): {os.path.basename(log_file)}")
             except Exception as e:
                 self.logger.warning(f"[LogCleaner] Delete failed: {log_file} ({e})")
-                
+
+        # 2. Size-based cleanup (if needed)
         current_size = self._get_log_size_mb()
         while current_size > self.max_log_size_mb:
             oldest_files = self._get_log_files()
             if not oldest_files:
                 break
-            oldest = oldest_files[0]
+            oldest = oldest_files[0]  # Oldest file
             try:
                 file_size_mb = os.path.getsize(oldest) / (1024 ** 2)
                 os.remove(oldest)
@@ -115,10 +121,11 @@ class LogCleaner(Plugin):
         return deleted
 
     def on_second(self, agent):
-        """Sekündliche Statusaktualisierung"""
+        """Update status every second"""
         try:
             current_time = time.time()
             
+            # Update storage status
             current_size = self._get_log_size_mb()
             if current_size > self.max_log_size_mb * 0.9:
                 self.storage_status = "WARN"
@@ -127,6 +134,7 @@ class LogCleaner(Plugin):
             else:
                 self.storage_status = "OK"
 
+            # Scheduled cleanup
             if current_time - self.last_cleanup >= self.cleanup_interval:
                 deleted = self._clean_logs()
                 if deleted:
@@ -137,10 +145,11 @@ class LogCleaner(Plugin):
             self.logger.error(f"[LogCleaner] Runtime error: {e}")
 
     def on_ui_update(self, ui):
-        """Aktualisiere UI-Anzeige"""
+        """Update UI display"""
         try:
             ui.set('log_status', f"{self._get_log_size_mb():.1f}MB/{self.storage_status}")
         except Exception as e:
             self.logger.error(f"[LogCleaner] UI update failed: {e}")
 
+# Plugin instance
 instance = LogCleaner()
