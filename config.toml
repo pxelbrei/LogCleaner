@@ -5,3 +5,4 @@ main.plugins.logcleaner.max_log_size_mb = 10               # Max storage in MB
 main.plugins.logcleaner.pos_x = -10                        # 10px from right edge
 main.plugins.logcleaner.pos_y = 0                          # Top edge
 main.plugins.logcleaner.interval = 1800                    # Cleanup interval (seconds)
+main.plugins.logcleaner.log_level = "DEBUG"                # DEBUG, INFO (default), WARNING, ERROR
