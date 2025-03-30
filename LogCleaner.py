@@ -6,8 +6,8 @@ from pwnagotchi.ui.components import LabeledValue
 from pwnagotchi.plugins import Plugin
 
 class LogCleaner(Plugin):
-    __author__ = 'pxelbrei'
-    __version__ = '1.4.0'
+    __author__ = 'p.xelbrei'
+    __version__ = '1.1.0'
     __license__ = 'GPLv3'
     __description__ = 'Automated log management with configurable retention policies'
 
