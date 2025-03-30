@@ -3,3 +3,4 @@ main.plugins.logcleaner.max_log_age_days = 7
 main.plugins.logcleaner.max_log_size_mb = 10
 main.plugins.logcleaner.pos_x = -10  # 10px from right edge
 main.plugins.logcleaner.pos_y = 20   # 20px from top
+main.plugins.logcleaner.interval = 1800  #Cleanintervall (30 Minutes)
